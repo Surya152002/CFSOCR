@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OCR Program</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        display: block;
+        margin: 20px auto;
+        border: 1px solid #ccc;
+      }
+  </style>
+
+  </head>
+  <body>
+    <input type="file" id="imageUpload" onchange="displayImage()">
+    <br>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    
+    <script>
+      function displayImage() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const file = document.getElementById('imageUpload').files[0];
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+      }
+      function processImage(input) {
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function (event) {
+        const img = new Image();
+        img.onload = function () {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          Tesseract.recognize(canvas, {
+            lang: "eng",
+            tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-",
+          })
+            .then((result) => {
+              const text = result.text;
+              const lines = text.split("\n");
+              const courses = [];
+              const slots = [];
+              const faculty = [];
+              lines.forEach((line) => {
+                const words = line.split(" ");
+                words.forEach((word) => {
+                  if (word.match(/[A-Z]{3}\d{3}/)) {
+                    courses.push(word);
+                  }
+                  if (word.match(/[A-Za-z]+/) && !word.match(/MON|TUE|WED|THU|FRI|SAT|SUN/)) {
+                    faculty.push(word);
+                  }
+                  if (word.match(/MON|TUE|WED|THU|FRI|SAT|SUN/)) {
+                    slots.push(word);
+                  }
+                });
+              });
+              console.log("Courses:", courses);
+              console.log("Faculty:", faculty);
+              console.log("Slots:", slots);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        };
+        img.src = event.target.result;
+      };
+    }
+
+    </script>
+  </body>
+</html>
